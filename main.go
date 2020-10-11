@@ -1,3 +1,7 @@
+/*
+  Caddy v2 module to filter requests based on source IP geographic location. This was a feature provided by the V1 ipfilter middleware.
+  Complete documentation and usage examples are available at https://github.com/porech/caddy-maxmind-geolocation
+*/
 package caddy_maxmind_geolocation
 
 import (
@@ -35,13 +39,18 @@ type MaxmindGeolocation struct {
 
 /*
 	The matcher configuration will have a single block with the following parameters:
-	- `db_path`: required, is the path to the GeoLite2-Country.mmdb file
-	- `allow_countries`: a space-separated list of allowed countries
-	- `deny_countries`: a space-separated list of denied countries.
+
+    - `db_path`: required, is the path to the GeoLite2-Country.mmdb file
+
+    - `allow_countries`: a space-separated list of allowed countries
+
+    - `deny_countries`: a space-separated list of denied countries.
 
 	You will want specify just one of `allow_countries` or `deny_countries`. If you
 	specify both of them, denied countries will take precedence over allowed ones.
 	If you specify none of them, all requests will be denied.
+
+    Examples are available at https://github.com/porech/caddy-maxmind-geolocation/
  */
 func (m *MaxmindGeolocation) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	current := 0
