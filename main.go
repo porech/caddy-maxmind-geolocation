@@ -30,12 +30,15 @@ func init() {
 
 // Allows to filter requests based on source IP country.
 type MaxmindGeolocation struct {
+
 	// The path of the MaxMind GeoLite2-Country.mmdb file.
 	DbPath         string   `json:"db_path"`
+
 	// A list of countries that the filter will allow.
 	// If you specify this, you should not specify DenyCountries.
 	// All countries that are not in this list will be denied.
 	AllowCountries []string `json:"allow_countries"`
+
 	// A list of countries that the filter will deny.
 	// If you specify this, you should not specify AllowCountries.
 	// All countries that are not in this list will be allowed.
@@ -48,17 +51,17 @@ type MaxmindGeolocation struct {
 /*
 	The matcher configuration will have a single block with the following parameters:
 
-    - `db_path`: required, is the path to the GeoLite2-Country.mmdb file
+	- `db_path`: required, is the path to the GeoLite2-Country.mmdb file
 
-    - `allow_countries`: a space-separated list of allowed countries
+	- `allow_countries`: a space-separated list of allowed countries
 
-    - `deny_countries`: a space-separated list of denied countries.
+	- `deny_countries`: a space-separated list of denied countries.
 
 	You will want specify just one of `allow_countries` or `deny_countries`. If you
 	specify both of them, denied countries will take precedence over allowed ones.
 	If you specify none of them, all requests will be denied.
 
-    Examples are available at https://github.com/porech/caddy-maxmind-geolocation/
+	Examples are available at https://github.com/porech/caddy-maxmind-geolocation/
  */
 func (m *MaxmindGeolocation) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	current := 0
