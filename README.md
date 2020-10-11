@@ -23,7 +23,7 @@ You can use this module as a matcher to blacklist or whitelist a set of countrie
 
 ### Caddyfile
 
-- Allow access to the website only from Italy and France:
+1. Allow access to the website only from Italy and France:
 ```
 test.example.org {
   @mygeofilter {
@@ -40,7 +40,7 @@ test.example.org {
 
 ```
 
-- Deny access to the website from Russia:
+2. Deny access to the website from Russia:
 ```
 test.example.org {
   @mygeofilter {
@@ -59,7 +59,7 @@ test.example.org {
 
 ### API/JSON
 
-- Allow access to the website only from Italy and France:
+1. Allow access to the website only from Italy and France:
 ```jsonc
 {
   "apps": {
@@ -96,7 +96,7 @@ test.example.org {
 
 ```
 
-- Deny access to the website from Russia
+2. Deny access to the website from Russia
 ```jsonc
 {
   "apps": {
@@ -131,40 +131,4 @@ test.example.org {
   }
 }
 
-```
-
-2. As an handler within a route for commands that get triggered by an http endpoint.
-
-```jsonc
-
-{
-  ...
-  "routes": [
-    {
-      "handle": [
-        // exec configuration for an endpoint route
-        {
-          // required to inform caddy the handler is `exec`
-          "handler": "exec",
-          // command to execute
-          "command": "git",
-          // command arguments
-          "args": ["pull", "origin", "master"],
-
-          // [optional] directory to run the command from. Default is the current directory.
-          "directory": "/home/user/site/public",
-          // [optional] if the command should run on the foreground. Default is false.
-          "foreground": true,
-          // [optional] timeout to terminate the command's process. Default is 10s.
-          "timeout": "5s"
-        }
-      ],
-      "match": [
-        {
-          "path": ["/generate"]
-        }
-      ]
-    }
-  ]
-}
 ```
