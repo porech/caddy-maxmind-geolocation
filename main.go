@@ -28,9 +28,17 @@ func init() {
 	caddy.RegisterModule(MaxmindGeolocation{})
 }
 
+// Allows to filter requests based on source IP country.
 type MaxmindGeolocation struct {
+	// The path of the MaxMind GeoLite2-Country.mmdb file.
 	DbPath         string   `json:"db_path"`
+	// A list of countries that the filter will allow.
+	// If you specify this, you should not specify DenyCountries.
+	// All countries that are not in this list will be denied.
 	AllowCountries []string `json:"allow_countries"`
+	// A list of countries that the filter will deny.
+	// If you specify this, you should not specify AllowCountries.
+	// All countries that are not in this list will be allowed.
 	DenyCountries  []string `json:"deny_countries"`
 
 	dbInst *maxminddb.Reader
