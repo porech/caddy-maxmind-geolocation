@@ -46,7 +46,7 @@ test.example.org {
   @mygeofilter {
     maxmind_geolocation {
       db_path "/usr/share/GeoIP/GeoLite2-Country.mmdb"
-      deny_countries IT FR
+      deny_countries RU
     }
   }
 
