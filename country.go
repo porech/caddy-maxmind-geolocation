@@ -17,6 +17,13 @@ type Country struct {
 	Names             Names  `maxminddb:"names"`
 }
 
+type Subdivision struct {
+	ISOCode string `maxminddb:"iso_code"`
+}
+
 type Record struct {
-	Country Country `maxminddb:"country"`
+	Country      Country     `maxminddb:"country"`
+	Subdivision1 Subdivision `maxminddb:"subdivision_1"`
+	Subdivision2 Subdivision `maxminddb:"subdivision_2"`
+	MetroCode    string      `json:"metro_code"`
 }

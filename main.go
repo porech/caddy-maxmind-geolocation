@@ -32,7 +32,7 @@ func init() {
 type MaxmindGeolocation struct {
 
 	// The path of the MaxMind GeoLite2-Country.mmdb file.
-	DbPath         string   `json:"db_path"`
+	DbPath string `json:"db_path"`
 
 	// A list of countries that the filter will allow.
 	// If you specify this, you should not specify DenyCountries.
@@ -42,7 +42,7 @@ type MaxmindGeolocation struct {
 	// A list of countries that the filter will deny.
 	// If you specify this, you should not specify AllowCountries.
 	// All countries that are not in this list will be allowed.
-	DenyCountries  []string `json:"deny_countries"`
+	DenyCountries []string `json:"deny_countries"`
 
 	dbInst *maxminddb.Reader
 	logger *zap.Logger
@@ -62,7 +62,7 @@ type MaxmindGeolocation struct {
 	If you specify none of them, all requests will be denied.
 
 	Examples are available at https://github.com/porech/caddy-maxmind-geolocation/
- */
+*/
 func (m *MaxmindGeolocation) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	current := 0
 	for d.Next() {
