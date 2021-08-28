@@ -1,5 +1,7 @@
 package caddy_maxmind_geolocation
 
+import "strings"
+
 type Names struct {
 	De   string `maxminddb:"de"`
 	En   string `maxminddb:"en"`
@@ -17,6 +19,29 @@ type Country struct {
 	Names             Names  `maxminddb:"names"`
 }
 
+type Subdivision struct {
+	ISOCode string `maxminddb:"iso_code"`
+}
+
+type Subdivisions []Subdivision
+
+func (s Subdivisions) GetISOCodes() []string {
+	var result []string
+	for _, sub := range s {
+		result = append(result, sub.ISOCode)
+	}
+	return result
+}
+func (s Subdivisions) CommaSeparatedISOCodes() string {
+	return strings.Join(s.GetISOCodes(), ",")
+}
+
+type Location struct {
+	MetroCode int `maxminddb:"metro_code"`
+}
+
 type Record struct {
-	Country Country `maxminddb:"country"`
+	Country      Country      `maxminddb:"country"`
+	Location     Location     `maxminddb:"location"`
+	Subdivisions Subdivisions `maxminddb:"subdivisions"`
 }
