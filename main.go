@@ -117,7 +117,6 @@ func (m *MaxmindGeolocation) Cleanup() error {
 }
 
 func (m *MaxmindGeolocation) Match(r *http.Request) bool {
-	var record Record
 
 	// If both the allow and deny fields are empty, let the request pass
 	if len(m.AllowCountries) < 1 && len(m.DenyCountries) < 1 {
@@ -135,13 +134,20 @@ func (m *MaxmindGeolocation) Match(r *http.Request) bool {
 		m.logger.Warn("cannot parse IP address", zap.String("address", r.RemoteAddr))
 		return false
 	}
+	var record Record
 	err = m.dbInst.Lookup(addr, &record)
 	if err != nil {
 		m.logger.Warn("cannot lookup IP address", zap.String("address", r.RemoteAddr), zap.Error(err))
 		return false
 	}
 
-	m.logger.Debug("Detected country", zap.String("country", record.Country.ISOCode))
+	m.logger.Debug(
+		"Detected MaxMind data",
+		zap.String("ip", r.RemoteAddr),
+		zap.String("country", record.Country.ISOCode),
+		zap.String("subdivisions", record.Subdivisions[0].ISOCode),
+		zap.Int("metro_code", record.Location.MetroCode),
+	)
 
 	for _, denyCountry := range m.DenyCountries {
 		if denyCountry == record.Country.ISOCode {
