@@ -1,6 +1,6 @@
 /*
-  Caddy v2 module to filter requests based on source IP geographic location. This was a feature provided by the V1 ipfilter middleware.
-  Complete documentation and usage examples are available at https://github.com/porech/caddy-maxmind-geolocation
+Caddy v2 module to filter requests based on source IP geographic location. This was a feature provided by the V1 ipfilter middleware.
+Complete documentation and usage examples are available at https://github.com/porech/caddy-maxmind-geolocation
 */
 package caddy_maxmind_geolocation
 
@@ -77,24 +77,49 @@ type MaxmindGeolocation struct {
 	// You can specify the special value "UNK" to match unrecognized metro codes.
 	DenyMetroCodes []string `json:"deny_metro_codes"`
 
+	// A list of ASNs that the filter will allow.
+	// If you specify this, you should not specify DenyASN.
+	// If both are specified, DenyASN will take precedence.
+	// All ASNs that are not in this list will be denied.
+	// You can specify the special value "UNK" to match unrecognized ASNs.
+	AllowASN []string `json:"allow_asn"`
+
+	// A list of ASNs that the filter will deny.
+	// If you specify this, you should not specify AllowASN.
+	// If both are specified, DenyASN will take precedence.
+	// All ASNs that are not in this list will be allowed.
+	// You can specify the special value "UNK" to match unrecognized ASNs.
+	DenyASN []string `json:"deny_asn"`
+
 	dbInst *maxminddb.Reader
 	logger *zap.Logger
 }
 
 /*
-	The matcher configuration will have a single block with the following parameters:
+The matcher configuration will have a single block with the following parameters:
 
-	- `db_path`: required, is the path to the GeoLite2-Country.mmdb file
+- `db_path`: required, is the path to the GeoLite2-Country.mmdb file
 
-	- `allow_countries`: a space-separated list of allowed countries
+- `allow_countries`: a space-separated list of allowed countries
 
-	- `deny_countries`: a space-separated list of denied countries.
+- `deny_countries`: a space-separated list of denied countries.
 
-	You will want specify just one of `allow_countries` or `deny_countries`. If you
-	specify both of them, denied countries will take precedence over allowed ones.
-	If you specify none of them, all requests will be denied.
+- `allow_subdivisions`: a space-separated list of allowed subdivisions
 
-	Examples are available at https://github.com/porech/caddy-maxmind-geolocation/
+- `deny_subdivisions`: a space-separated list of denied subdivisions.
+
+- `allow_metro_codes`: a space-separated list of allowed metro codes
+
+- `deny_metro_codes`: a space-separated list of denied metro codes.
+
+- `allow_asn`: a space-separated list of allowed ASNs
+
+- `deny_asn`: a space-separated list of denied ASNs.
+
+You will want specify just one of `allow_***` or `deny_ééé`. If you
+specify both of them, denied items will take precedence over allowed ones.
+
+Examples are available at https://github.com/porech/caddy-maxmind-geolocation/
 */
 func (m *MaxmindGeolocation) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	current := 0
@@ -115,6 +140,10 @@ func (m *MaxmindGeolocation) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 				current = 6
 			case "deny_metro_codes":
 				current = 7
+			case "allow_asn":
+				current = 8
+			case "deny_asn":
+				current = 9
 			default:
 				switch current {
 				case 1:
@@ -132,6 +161,10 @@ func (m *MaxmindGeolocation) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 					m.AllowMetroCodes = append(m.AllowMetroCodes, d.Val())
 				case 7:
 					m.DenyMetroCodes = append(m.DenyMetroCodes, d.Val())
+				case 8:
+					m.AllowASN = append(m.AllowASN, d.Val())
+				case 9:
+					m.DenyASN = append(m.DenyASN, d.Val())
 				default:
 					return fmt.Errorf("unexpected config parameter %s", d.Val())
 				}
@@ -189,12 +222,6 @@ func (m *MaxmindGeolocation) checkAllowed(item string, allowedList []string, den
 }
 
 func (m *MaxmindGeolocation) Match(r *http.Request) bool {
-
-	// If both the allow and deny fields are empty, let the request pass
-	if len(m.AllowCountries) < 1 && len(m.DenyCountries) < 1 {
-		return false
-	}
-
 	remoteIp, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		m.logger.Warn("cannot split IP address", zap.String("address", r.RemoteAddr), zap.Error(err))
@@ -219,6 +246,7 @@ func (m *MaxmindGeolocation) Match(r *http.Request) bool {
 		zap.String("country", record.Country.ISOCode),
 		zap.String("subdivisions", record.Subdivisions.CommaSeparatedISOCodes()),
 		zap.Int("metro_code", record.Location.MetroCode),
+		zap.Int("asn", record.AutonomousSystemNumber),
 	)
 
 	if !m.checkAllowed(record.Country.ISOCode, m.AllowCountries, m.DenyCountries) {
@@ -242,6 +270,11 @@ func (m *MaxmindGeolocation) Match(r *http.Request) bool {
 
 	if !m.checkAllowed(strconv.Itoa(record.Location.MetroCode), m.AllowMetroCodes, m.DenyMetroCodes) {
 		m.logger.Debug("Metro code not allowed", zap.Int("metro_code", record.Location.MetroCode))
+		return false
+	}
+
+	if !m.checkAllowed(strconv.Itoa(record.AutonomousSystemNumber), m.AllowASN, m.DenyASN) {
+		m.logger.Debug("ASN not allowed", zap.Int("asn", record.AutonomousSystemNumber))
 		return false
 	}
 

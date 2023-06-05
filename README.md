@@ -101,6 +101,23 @@ test.example.org {
 
 ```
 
+5. Deny access from AS58280 (note that you'll need the ASN database here):
+```
+test.example.org {
+  @mygeofilter {
+    maxmind_geolocation {
+      db_path "/usr/share/GeoIP/GeoLite2-ASN.mmdb"
+      deny_asn 58280
+    }
+  }
+
+   file_server @mygeofilter {
+     root /var/www/html
+   }
+}
+
+```
+
 ### API/JSON
 
 1. Allow access to the website only from Italy and France:
@@ -235,6 +252,43 @@ test.example.org {
                     "allow_countries": [ "US" ],
                     "allow_subdivisions": [ "TX" ],
                     "deny_metro_codes": [ "623", "UNK" ]
+                  }
+                }
+              ],
+              "handle": [
+                {
+                  "handler": "file_server",
+                  "root": "/var/www/html"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+```
+
+5. Deny access from AS58280 (note that you'll need the ASN database here):
+```jsonc
+{
+  "apps": {
+    "http": {
+      "servers": {
+        "myserver": {
+          "listen": [":443"],
+          "routes": [
+            {
+              "match": [
+                {
+                  "host": [
+                    "test.example.org"
+                  ],
+          "maxmind_geolocation": {
+                    "db_path": "/usr/share/GeoIP/GeoLite2-ASN.mmdb",
+                    "deny_asn": [ "58280" ]
                   }
                 }
               ],

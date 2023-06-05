@@ -41,7 +41,8 @@ type Location struct {
 }
 
 type Record struct {
-	Country      Country      `maxminddb:"country"`
-	Location     Location     `maxminddb:"location"`
-	Subdivisions Subdivisions `maxminddb:"subdivisions"`
+	Country                Country      `maxminddb:"country"`
+	Location               Location     `maxminddb:"location"`
+	Subdivisions           Subdivisions `maxminddb:"subdivisions"`
+	AutonomousSystemNumber int          `maxminddb:"autonomous_system_number"`
 }
