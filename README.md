@@ -101,7 +101,7 @@ test.example.org {
 
 ```
 
-5. Deny access from AS58280 (note that you'll need the ASN database here):
+5. Deny access from [AS58280](https://as58280.net/) (note that you'll need the ASN database here):
 ```
 test.example.org {
   @mygeofilter {
@@ -271,7 +271,7 @@ test.example.org {
 
 ```
 
-5. Deny access from AS58280 (note that you'll need the ASN database here):
+5. Deny access from [AS58280](https://as58280.net/) (note that you'll need the ASN database here):
 ```jsonc
 {
   "apps": {
