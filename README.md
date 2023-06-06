@@ -101,13 +101,13 @@ test.example.org {
 
 ```
 
-5. Deny access from [AS58280](https://as58280.net/) (note that you'll need the ASN database here):
+5. Deny access from AS64496 (note that you'll need the ASN database here):
 ```
 test.example.org {
   @mygeofilter {
     maxmind_geolocation {
       db_path "/usr/share/GeoIP/GeoLite2-ASN.mmdb"
-      deny_asn 58280
+      deny_asn 64496
     }
   }
 
@@ -271,7 +271,7 @@ test.example.org {
 
 ```
 
-5. Deny access from [AS58280](https://as58280.net/) (note that you'll need the ASN database here):
+5. Deny access from AS64496 (note that you'll need the ASN database here):
 ```jsonc
 {
   "apps": {
@@ -288,7 +288,7 @@ test.example.org {
                   ],
           "maxmind_geolocation": {
                     "db_path": "/usr/share/GeoIP/GeoLite2-ASN.mmdb",
-                    "deny_asn": [ "58280" ]
+                    "deny_asn": [ "64496" ]
                   }
                 }
               ],
