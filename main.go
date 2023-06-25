@@ -93,7 +93,7 @@ type MaxmindGeolocation struct {
 	DenyASN []string `json:"deny_asn"`
 
 	// Use x-forwarded-ip as remote ip
-	Forwarded bool `json:"forwarded,omitempty"`
+	Forwarded bool `json:"forwarded_as_sources_ip,omitempty"`
 
 	dbInst *maxminddb.Reader
 	logger *zap.Logger
