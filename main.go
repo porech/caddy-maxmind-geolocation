@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -182,18 +183,32 @@ func (MaxmindGeolocation) CaddyModule() caddy.ModuleInfo {
 }
 
 func (m *MaxmindGeolocation) Provision(ctx caddy.Context) error {
-	var err error
 	m.logger = ctx.Logger(m)
-	m.dbInst, err = maxminddb.Open(m.DbPath)
+	return nil
+}
+
+func (m *MaxmindGeolocation) Validate() error {
+	if m.DbPath == "" {
+		return fmt.Errorf("db_path is required")
+	}
+	fh, err := os.Open(m.DbPath)
 	if err != nil {
-		return fmt.Errorf("cannot open database file %s: %v", m.DbPath, err)
+		return fmt.Errorf("cannot open path %s: %v", m.DbPath, err)
+	}
+	err = fh.Close()
+	if err != nil {
+		return fmt.Errorf("cannot close path %s: %v", m.DbPath, err)
 	}
 	return nil
 }
 
 func (m *MaxmindGeolocation) Cleanup() error {
 	if m.dbInst != nil {
-		return m.dbInst.Close()
+		err := m.dbInst.Close()
+		if err != nil {
+			return fmt.Errorf("cannot close database: %v", err)
+		}
+		m.dbInst = nil
 	}
 	return nil
 }
@@ -234,6 +249,15 @@ func (m *MaxmindGeolocation) Match(r *http.Request) bool {
 		return false
 	}
 	var record Record
+
+	if m.dbInst == nil {
+		m.dbInst, err = maxminddb.Open(m.DbPath)
+		if err != nil {
+			m.logger.Error("cannot open database file", zap.String("path", m.DbPath), zap.Error(err))
+			return false
+		}
+	}
+
 	err = m.dbInst.Lookup(addr, &record)
 	if err != nil {
 		m.logger.Warn("cannot lookup IP address", zap.String("address", r.RemoteAddr), zap.Error(err))
