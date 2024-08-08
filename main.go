@@ -237,18 +237,20 @@ func (m *MaxmindGeolocation) checkAllowed(item string, allowedList []string, den
 }
 
 func (m *MaxmindGeolocation) Match(r *http.Request) bool {
-	remoteIp, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		m.logger.Warn("cannot split IP address", zap.String("address", r.RemoteAddr), zap.Error(err))
+	clientIP, ok := caddyhttp.GetVar(r.Context(), caddyhttp.ClientIPVarKey).(string)
+	if !ok {
+		m.logger.Warn("failed getting client IP from context")
+		return false
 	}
 
 	// Get the record from the database
-	addr := net.ParseIP(remoteIp)
+	addr := net.ParseIP(clientIP)
 	if addr == nil {
-		m.logger.Warn("cannot parse IP address", zap.String("address", r.RemoteAddr))
+		m.logger.Warn("cannot parse IP address", zap.String("address", clientIP))
 		return false
 	}
 	var record Record
+	var err error
 
 	if m.dbInst == nil {
 		m.dbInst, err = maxminddb.Open(m.DbPath)
@@ -260,13 +262,13 @@ func (m *MaxmindGeolocation) Match(r *http.Request) bool {
 
 	err = m.dbInst.Lookup(addr, &record)
 	if err != nil {
-		m.logger.Warn("cannot lookup IP address", zap.String("address", r.RemoteAddr), zap.Error(err))
+		m.logger.Warn("cannot lookup IP address", zap.String("address", clientIP), zap.Error(err))
 		return false
 	}
 
 	m.logger.Debug(
 		"Detected MaxMind data",
-		zap.String("ip", r.RemoteAddr),
+		zap.String("ip", clientIP),
 		zap.String("country", record.Country.ISOCode),
 		zap.String("subdivisions", record.Subdivisions.CommaSeparatedISOCodes()),
 		zap.Int("metro_code", record.Location.MetroCode),
