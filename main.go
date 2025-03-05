@@ -6,15 +6,18 @@ package caddy_maxmind_geolocation
 
 import (
 	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"strconv"
+
+	"slices"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/oschwald/maxminddb-golang"
 	"go.uber.org/zap"
-	"net"
-	"net/http"
-	"os"
-	"strconv"
 )
 
 // Interface guards
@@ -218,16 +221,37 @@ func (m *MaxmindGeolocation) checkAllowed(item string, allowedList []string, den
 		item = "UNK"
 	}
 	if len(deniedList) > 0 {
-		for _, i := range deniedList {
-			if i == item {
+		return !slices.Contains(deniedList, item)
+	}
+	if len(allowedList) > 0 {
+		return slices.Contains(allowedList, item)
+	}
+	return true
+}
+
+func (m *MaxmindGeolocation) checkAllowedSubdivisions(items []Subdivision, allowedList []string, deniedList []string) bool {
+	if len(deniedList) > 0 {
+		// If at least one of the detected subdivisions is denied, the request is denied, else it is allowed
+		for _, item := range items {
+			isoCode := item.ISOCode
+			if isoCode == "" || isoCode == "0" {
+				isoCode = "UNK"
+			}
+			if slices.Contains(deniedList, isoCode) {
 				return false
 			}
 		}
 		return true
 	}
+
 	if len(allowedList) > 0 {
-		for _, i := range allowedList {
-			if i == item {
+		// If at least one of the detected subdivisions is allowed, the request is allowed, else it is denied
+		for _, item := range items {
+			isoCode := item.ISOCode
+			if isoCode == "" || isoCode == "0" {
+				isoCode = "UNK"
+			}
+			if slices.Contains(allowedList, isoCode) {
 				return true
 			}
 		}
@@ -281,15 +305,13 @@ func (m *MaxmindGeolocation) Match(r *http.Request) bool {
 	}
 
 	if len(record.Subdivisions) > 0 {
-		for _, subdivision := range record.Subdivisions {
-			if !m.checkAllowed(subdivision.ISOCode, m.AllowSubdivisions, m.DenySubdivisions) {
-				m.logger.Debug("Subdivision not allowed", zap.String("subdivision", subdivision.ISOCode))
-				return false
-			}
+		if !m.checkAllowedSubdivisions(record.Subdivisions, m.AllowSubdivisions, m.DenySubdivisions) {
+			m.logger.Debug("Subdivisions not allowed", zap.String("subdivisions", record.Subdivisions.CommaSeparatedISOCodes()))
+			return false
 		}
 	} else {
 		if !m.checkAllowed("", m.AllowSubdivisions, m.DenySubdivisions) {
-			m.logger.Debug("Subdivision not allowed", zap.String("subdivision", ""))
+			m.logger.Debug("Subdivisions not allowed", zap.String("subdivisions", ""))
 			return false
 		}
 	}
