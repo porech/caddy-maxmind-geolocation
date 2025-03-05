@@ -12,6 +12,8 @@ If you prefer, you can build Caddy by yourself by [installing xcaddy](https://gi
 xcaddy build --with github.com/porech/caddy-maxmind-geolocation
 ```
 
+Please note that you will probably need Git installed to correctly build Caddy with this module. This is pretty unconvenient on Windows, but installing the package from https://git-scm.com/downloads/win should suffice.
+
 ## Requirements 
 
 To be able to use this module you will need to have a Maxmind GeoLite2 database, that can be downloaded for free
