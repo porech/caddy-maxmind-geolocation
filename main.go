@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"slices"
 
@@ -95,6 +96,11 @@ type MaxmindGeolocation struct {
 	// You can specify the special value "UNK" to match unrecognized ASNs.
 	DenyASN []string `json:"deny_asn"`
 
+	// The IP header to use for the client IP address.
+	// If not specified, the "client_ip" (default in caddy) header will be used.
+	// It can be usefull to use "X-Forwarded-For" header instead.
+	IPHeader string `json:"ip_header,omitempty"`
+
 	dbInst *maxminddb.Reader
 	logger *zap.Logger
 }
@@ -148,6 +154,8 @@ func (m *MaxmindGeolocation) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 				current = 8
 			case "deny_asn":
 				current = 9
+			case "ip_header":
+				current = 10
 			default:
 				switch current {
 				case 1:
@@ -169,6 +177,11 @@ func (m *MaxmindGeolocation) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 					m.AllowASN = append(m.AllowASN, d.Val())
 				case 9:
 					m.DenyASN = append(m.DenyASN, d.Val())
+				case 10:
+					if !d.NextArg() {
+						return d.ArgErr()
+					}
+					m.IPHeader = d.Val()
 				default:
 					return fmt.Errorf("unexpected config parameter %s", d.Val())
 				}
@@ -261,9 +274,20 @@ func (m *MaxmindGeolocation) checkAllowedSubdivisions(items []Subdivision, allow
 }
 
 func (m *MaxmindGeolocation) Match(r *http.Request) bool {
-	clientIP, ok := caddyhttp.GetVar(r.Context(), caddyhttp.ClientIPVarKey).(string)
-	if !ok {
-		m.logger.Warn("failed getting client IP from context")
+	var clientIP string
+	if m.IPHeader != "" {
+		xff := r.Header.Get(m.IPHeader)
+		if idx := strings.Index(xff, ","); idx != -1 {
+			clientIP = strings.TrimSpace(xff[:idx])
+		} else {
+			clientIP = strings.TrimSpace(xff)
+		}
+	} else {
+		clientIP, _ = caddyhttp.GetVar(r.Context(), caddyhttp.ClientIPVarKey).(string)
+	}
+
+	if clientIP == "" {
+		m.logger.Warn("failed determining client IP")
 		return false
 	}
 
